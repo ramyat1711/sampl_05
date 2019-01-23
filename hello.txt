@@ -1,1 +1,100 @@
-Hi.. Test 
+ exports.getProductFilter=function(req,res){
+        var productarray=req.body;
+        console.log(productarray);
+        var prodarray=[];
+        var result=[];       
+        let categoryid=req.params.Categories_id;
+        ProductImages.belongsTo(Products, {  foreignKey: 'Products_id', targetKey: 'Products_id' } );    
+        Products.belongsTo(Manufacture, {  foreignKey: 'Manufacturer_id', targetKey: 'Manufacturers_id' } );
+        Products.belongsTo(TaxConfig, {  foreignKey: 'Products_taxID', targetKey: 'Tax_id' } );
+        ProductOptions.belongsTo(Products, { foreignKey: 'Products_id', targetKey: 'Products_id' } );
+        ProductOptions.belongsTo(Attributes, { foreignKey: 'Attributes_id', targetKey: 'Products_attr_id' } );
+        ProductOptions.belongsTo(Values, { foreignKey: 'values_id', targetKey: 'Products_values_id' } );
+        ProductCategories.belongsTo(Products, {  foreignKey: 'Products_id', targetKey: 'Products_id' } );
+        ProductCategories.belongsTo(Categories, {  foreignKey: 'Categories_id', targetKey: 'Categories_id' } );
+        
+            var j='0';
+            Sequelize.Promise.each(productarray, function(event){ 
+                    
+                return ProductCategories.findAll({
+                    include: [
+                        {
+                          model: Products,
+                          required: true,
+                          
+                      },
+                    ],
+                      where :{
+                          Isactive:1,
+                          Categories_id:productarray[j].Categories_id
+                        }
+                })
+                  
+          .then (function(list,out){
+            data = list;
+         
+           if(data.length>0){
+            result.push({data:data});
+          //debugger;
+            for(var i=0;i<data.length;i++){
+
+                prodarray.push({id:data[i].Products_id});              
+               
+            }
+            
+            var k='0';
+            Sequelize.Promise.each(list, function(event){                     
+                return ProductImages.findAll({
+                    // include: [
+                    //     {
+                    //       model: Products,
+                    //       required: true,
+                          
+                    //   },
+                    // ],
+                    where: {  
+                        
+                        Isactive:1,
+                            Products_id: {
+                                    [Op.in]:  prodarray[k].id
+                                  }                                                  
+                      }
+                    
+                    //   where :{
+                    //       Isactive:1,
+                    //       Products_id:
+                    //       prodarray[k].id
+                    //     }
+                })
+                .then (function(list1,out){
+                                      
+                    images = list1;
+                    result.push({images:list1});
+                  
+                    k++;
+             })                     
+            
+            })
+            }
+
+            j++;
+
+             })            
+            //     .then (function(list1,out){
+            //         j++;
+            //         images = list1;
+            //         result.push({images:list1});
+            //        // console.log(result);    
+                 
+            //  })   
+                   
+             
+            }) // end loop
+            .then(function(){
+                res.send(result);
+           
+             })
+           
+        //})
+
+    }
